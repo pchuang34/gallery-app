@@ -2,9 +2,9 @@ package edu.vt.cs.cs5254.gallery
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.annotation.WorkerThread
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import edu.vt.cs.cs5254.gallery.api.FlickrApi
 import edu.vt.cs.cs5254.gallery.api.FlickrResponse
@@ -30,8 +30,10 @@ object FlickrFetchr {
         flickrApi = retrofit.create(FlickrApi::class.java)
     }
 
-    fun fetchPhotos(): LiveData<List<GalleryItem>> {
-        val responseLiveData: MutableLiveData<List<GalleryItem>> = MutableLiveData()
+    val galleryItemsLiveData: MutableLiveData<List<GalleryItem>> = MutableLiveData()
+
+    fun fetchPhotos() {
+//        if(galleryItemsLiveData.value != null) return
         val flickrRequest: Call<FlickrResponse> = flickrApi.fetchPhotos()
         flickrRequest.enqueue(object : Callback<FlickrResponse> {
             override fun onFailure(call: Call<FlickrResponse>, t: Throwable) { Log.e(TAG, "Failed to fetch photos", t)
@@ -46,9 +48,12 @@ object FlickrFetchr {
                     ?: mutableListOf()
                 galleryItems = galleryItems.filterNot {
                     it.url.isBlank() }
-                responseLiveData.value = galleryItems }
+                galleryItemsLiveData.value = galleryItems }
         })
-        return responseLiveData
+    }
+
+    fun storeThumbnail(id: String, drawable: Drawable) {
+        galleryItemsLiveData.value?.find { it.id == id }?.drawable = drawable
     }
 
     @WorkerThread
